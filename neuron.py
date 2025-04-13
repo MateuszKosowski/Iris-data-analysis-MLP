@@ -33,3 +33,8 @@ class Neuron:
         output = self._sigmoid(total_input)
 
         return output
+
+    def set_weights(self, weights):
+        if len(weights) != self.num_inputs:
+            raise ValueError(f"Liczba wag musi być równa liczbie wejść ({self.num_inputs}).")
+        self.weights = weights
