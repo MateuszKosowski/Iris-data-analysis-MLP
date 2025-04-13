@@ -1,0 +1,38 @@
+# Pliki i foldery specyficzne dla Pythona
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pkl
+*.egg
+*.egg-info/
+dist/
+build/
+*.so
+
+# Pliki wirtualnego środowiska
+venv/
+.env/
+*.env
+
+# Pliki IDE
+.idea/
+.vscode/
+*.iml
+
+# Pliki systemowe
+.DS_Store
+Thumbs.db
+
+# Logi i pliki tymczasowe
+*.log
+*.tmp
+*.swp
+*.swo
+*.bak
+
+# Pliki testowe
+.coverage
+.tox/
+.pytest_cache/
+htmlcov/
