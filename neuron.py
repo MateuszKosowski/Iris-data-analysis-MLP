@@ -3,14 +3,17 @@ import numpy as np
 class Neuron:
 
     # Konstruktor klasy Neuron
-    def __init__(self, num_inputs, bias): # self oznacza instancję klasy w Pythonie, jest to konwencja
+    def __init__(self, num_inputs, use_bias): # self oznacza instancję klasy w Pythonie, jest to konwencja
 
         if not isinstance(num_inputs, int) or num_inputs < 1:
             raise ValueError("Liczba wejść musi być dodatnią liczbą całkowitą.")
 
         self.num_inputs = num_inputs
         self.weights = (np.random.rand(num_inputs) * 2) - 1
-        self.bias = bias
+        if use_bias:
+            self.bias = (np.random.rand() * 2) - 1
+        else:
+            self.bias = 0
 
 
     #Sigmoid - zwraca wartość między 0 a 1. Po zsumowaniu, wag i biasu mówi na ile % neuron jest aktywowany, czyli np na ile % jest to pies lub nie.
