@@ -1,5 +1,5 @@
 
-# Metoda pomocnicza do wczytywania dodatniej liczby całkowitej od użytkownika
+# Metody pomocnicze - walidacja danych wejściowych
 def get_positive_integer_input(prompt):
     while True:
         try:
@@ -11,32 +11,30 @@ def get_positive_integer_input(prompt):
         except ValueError:
             print("Nieprawidłowe dane. Wprowadź liczbę całkowitą.")
 
-
-def get_network_config_from_user():
-    print("--- Konfiguracja sieci MLP ---")
-
-    # Ile inputów
-    num_inputs = get_positive_integer_input("Podaj liczbę WEJŚĆ: ")
-
-    # Ile warstw neuronów ukrytych
+def get_non_negative_integer_input(prompt):
     while True:
         try:
-            num_hidden_layers = int(input("Podaj liczbę warstw UKRYTYCH (0 lub więcej): "))
-            if num_hidden_layers >= 0:
-                break
+            value = int(input(prompt))
+            if value >= 0:
+                return value
             else:
-                print("Liczba warstw ukrytych nie może być ujemna. Spróbuj ponownie.")
+                print("Wartość nie może być ujemna. Spróbuj ponownie.")
         except ValueError:
             print("Nieprawidłowe dane. Wprowadź liczbę całkowitą.")
+
+
+def get_network_config_from_user(num_inputs, num_outputs):
+
+    print("\n--- Konfiguracja Warstw Ukrytych i Biasu ---")
+
+    # Ile warstw neuronów ukrytych
+    num_hidden_layers = get_non_negative_integer_input("Podaj liczbę warstw UKRYTYCH (0 lub więcej): ")
 
     # Liczba neuronów w każdej warstwie ukrytej
     hidden_layer_sizes = []
     for i in range(num_hidden_layers):
         size = get_positive_integer_input(f"Podaj liczbę neuronów w warstwie ukrytej nr {i + 1}: ")
         hidden_layer_sizes.append(size)
-
-    # Liczba neuronów w warstwie wyjściowej
-    num_outputs = 3 # Bo są 3 rodzaje irysów
 
     # Użycie biasu
     use_bias = None

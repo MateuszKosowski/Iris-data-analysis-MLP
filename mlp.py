@@ -35,7 +35,7 @@ class MLP:
 
         # Przechodzimy przez wszystkie warstwy
         for i, layer in enumerate(self.layers):
-            print(f"  Przetwarzanie przez warstwę {i+1}...")
+            #print(f"  Przetwarzanie przez warstwę {i+1}...")
             current_outputs = layer.calculate_outputs(current_outputs)
 
         return current_outputs
