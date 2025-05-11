@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 
 class Neuron:
@@ -20,6 +22,7 @@ class Neuron:
         self.last_inputs_to_neuron = None  # Wejścia, które otrzymał ostatnio neuron
         self.last_sigmoid_input = None  # z = (inputs * weights) + bias - Nie używane, ale można by użyć do debugowania
         self.last_sigmoid_output = None  # a = sigmoid(z)
+        self.last_weights = None  # Wagi, które neuron miał przed aktualizacją
         self.delta = 0.0  # Miejsce na przechowywanie obliczonej delty tego neuronu
         self.gradient = None  # Miejsce na przechowywanie gradientu tego neuronu
         self.is_last_layer = is_last_layer  # Flaga, czy neuron jest w ostatniej warstwie
@@ -70,11 +73,12 @@ class Neuron:
         self.gradient = self.delta * self.last_inputs_to_neuron
 
     def update_weights(self):
+
         # Aktualizacja wag
-        # self.weights += self.learning_rate * self.gradient
+        self.last_weights = copy.deepcopy(self.weights)  # Zapisanie starych wag
         self.weights_velocity = (self.momentum_param * self.weights_velocity) - (self.learning_rate * self.gradient)
         self.weights += self.weights_velocity
+
         # Aktualizacja biasu
-        # self.bias += self.learning_rate * self.delta
         self.bias_velocity = (self.momentum_param * self.bias_velocity) - (self.learning_rate * self.delta)
         self.bias += self.bias_velocity

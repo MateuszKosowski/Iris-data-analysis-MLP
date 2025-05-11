@@ -52,22 +52,34 @@ class MLP:
 
         return current_outputs
 
-    def backward_pass(self, target_outputs):
+    def backward_pass(self, target_outputs_vector):
 
-        #Zaczynamy od ostatniej warstwy
-        for i in range(self.num_layers - 1, -1, -1):
-            layer = self.layers[i]
-            # Obliczamy gradienty dla neuronów w tej warstwie
-            for j, neuron in enumerate(layer.neurons):
-                if i == self.num_layers - 1:
-                    # Ostatnia warstwa - obliczamy delta na podstawie błędu
-                    neuron.calculate_delta(target_outputs[j])
-                else:
-                    # Warstwy ukryte - obliczamy delta na podstawie propagacji wstecznej
-                    neuron.calculate_delta(layer.neurons[j].delta)
+        # --- Krok 1: Warstwa wyjściowa ---
 
-                # Aktualizujemy wagi i biasy
-                neuron.update_weights_and_bias()
+        output_layer = self.layers[-1] # Ostatnia warstwa w liście
+
+        for i, neuron in enumerate(output_layer.neurons):
+            neuron.calculate_delta(target_outputs_vector[i])  # Przekazujemy odpowiedni element celu
+            neuron.calculate_gradient()  # Obliczamy gradienty wag dla tego neuronu
+            neuron.update_weights()  # Aktualizujemy wagi i bias tego neuronu
+
+        # --- Krok 2: Warstwy ukryte (od końca do początku) ---
+
+        for layer_idx in range(len(self.layers) - 2, -1, -1): # Iteracja od przedostatniej do pierwszej warstwy, składnia: for i in range(start, end, step)
+
+            current_hidden_layer = self.layers[layer_idx]
+            next_layer = self.layers[layer_idx + 1]  # Warstwa bliżej wyjścia
+
+            for j_idx, neuron_hj in enumerate(current_hidden_layer.neurons): # j_idx - indeks neuronu w warstwie ukrytej
+
+                propagated_error_to_hj = 0.0 # Zmienna do przechowywania błędu propagowanego do neuronu ukrytego
+
+                for k_idx, neuron_k_next in enumerate(next_layer.neurons): # k_idx - indeks neuronu w warstwie wyjściowej
+                    propagated_error_to_hj += neuron_k_next.delta * neuron_k_next.weights[j_idx]
+
+                neuron_hj.calculate_delta(propagated_error_to_hj)
+                neuron_hj.calculate_gradient()
+                neuron_hj.update_weights()  # aktualizujemy wagi tej warstwy ukrytej
 
 
     def calculate_mse(self, current_outputs, target_outputs):
