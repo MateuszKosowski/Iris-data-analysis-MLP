@@ -7,7 +7,7 @@ class Layer:
         self.num_neurons = num_neurons
         self.num_input_per_neuron = num_input_per_neuron
         # Tworzymy listę neuronów
-        self.neurons = [Neuron(num_input_per_neuron, use_bias, learning_rate) for _ in range(num_neurons)]
+        self.neurons = [Neuron(num_input_per_neuron, use_bias, learning_rate, is_last_layer) for _ in range(num_neurons)]
         # Inicjalizujemy wyjścia neuronów
         self.outputs = np.zeros(num_neurons) # array z zerami o długości num_neurons
         self.is_last_layer = is_last_layer

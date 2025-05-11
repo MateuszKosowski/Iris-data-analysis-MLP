@@ -34,28 +34,59 @@ def main():
     print("\n--- Tworzenie Sieci ---")
     mlp_network = MLP(layer_sizes_array=architecture, use_bias=bias_flag)
 
-    print(f"\nPrzetwarzanie danych testowych ({len(test_features)} próbek) przez nienauczoną sieć...")
+    # Train labels jako wektory
+    train_labels_vector = np.zeros((len(train_labels), num_output_classes))
+    for j, label in enumerate(train_labels):
+        train_labels_vector[j, label] = 1
 
-    test_results = [] # Lista do przechowywania wyników
+    num_epochs = 1000  # Zdefiniuj liczbę epok treningu
+    num_samples = len(train_features)
 
-    for i in range(len(test_features)):
+    print(f"\n--- Rozpoczęcie Treningu ({num_epochs} epok) ---")
+
+    for epoch in range(num_epochs):
+
+        permutation = np.random.permutation(num_samples) # Losowe przetasowanie danych
+        shuffled_train_features = train_features[permutation] # Przetasowanie cech
+        shuffled_train_labels_vector = train_labels_vector[permutation] # Przetasowanie etykiet
+
+        total_epoch_error = 0.0
+
+        for i in range(num_samples):
+            input_sample = shuffled_train_features[i]
+            target_label_vector = shuffled_train_labels_vector[i]
+
+            # Krok 1: Przetwarzanie danych przez sieć (forward pass)
+            current_outputs = mlp_network.forward_pass(input_sample)
+
+            # Krok 2: Obliczanie błędów i aktualizacja wag (backward pass)
+            mlp_network.backward_pass(target_label_vector)
+
+            #Oblicz błąd dla tej próbki i dodaj do błędu epoki
+            error_for_sample = mlp_network.calculate_mse(current_outputs, target_label_vector)
+            total_epoch_error += error_for_sample
+
+        #Wyświetl średni błąd dla epoki
+        average_epoch_error = total_epoch_error / num_samples
+        if (epoch + 1) % 10 == 0:  # Wyświetl co 10 epok
+            print(
+                f"Epoka {epoch + 1}/{num_epochs} zakończona, MSE: {average_epoch_error:.6f}")
+
+    print("\n--- Zakończono Trening ---")
+
+    test_labels_vector = np.zeros((len(test_labels), num_output_classes))
+    for j, label in enumerate(test_labels):
+        test_labels_vector[j, label] = 1
+
+    for i in range(45):
         input_sample = test_features[i]
-        original_label = test_labels[i]
+        original_label = test_labels_vector[i]
 
-        output = mlp_network.forward_pass(input_sample)
-
-        test_results.append(output)
-
-        if i < 8:
-            print("--------------------------------------")
-            print(f"  Próbka testowa {i + 1}:")
-            print(f"    Wejście : {np.round(input_sample, 2)}")
-            print(f"    Cel (prawidołowa klasa): {original_label}")
-            print(f"    Wyjście : {np.round(output, 4)}")  # Wyniki przed treningiem
-            print(f"    Klasa wyjściowa: {np.argmax(output)}")  # Klasa z najwyższym prawdopodobieństwem
-
-    print(f"\nPrzetworzono wszystkie {len(test_features)} próbek testowych.")
-
+        print("--------------------------------------")
+        print(f"  Próbka testowa {i + 1}:")
+        print(f"    Wejście : {np.round(input_sample, 2)}")
+        print(f"    Cel (prawidołowa klasa): {original_label}")
+        print(f"    Wyjście : {np.round(mlp_network.forward_pass(input_sample), 4)}")
 
 if __name__ == "__main__":
     main()

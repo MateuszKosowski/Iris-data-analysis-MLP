@@ -26,7 +26,7 @@ class Neuron:
         self.delta = 0.0  # Miejsce na przechowywanie obliczonej delty tego neuronu
         self.gradient = None  # Miejsce na przechowywanie gradientu tego neuronu
         self.is_last_layer = is_last_layer  # Flaga, czy neuron jest w ostatniej warstwie
-        self.weights_velocity = np.zeros_like(num_inputs)  # Wektory prędkości dla wag
+        self.weights_velocity = np.zeros(num_inputs)  # Wektory prędkości dla wag
         self.bias_velocity = 0  # Prędkość dla biasu
         self.momentum_param = 0.9 # Parametr momentum
 
