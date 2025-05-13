@@ -1,3 +1,4 @@
+import pickle
 
 # Metody pomocnicze - walidacja danych wejściowych
 def get_positive_integer_input(prompt):
@@ -23,6 +24,7 @@ def get_non_negative_integer_input(prompt):
             print("Nieprawidłowe dane. Wprowadź liczbę całkowitą.")
 
 
+# Główne menu
 def get_network_config_from_user(num_inputs, num_outputs):
 
     print("\n--- Konfiguracja Warstw Ukrytych i Biasu ---")
@@ -54,5 +56,86 @@ def get_network_config_from_user(num_inputs, num_outputs):
     print(f"Architektura sieci: WEJŚĆIA - liczba neuronów w warstwach ukrytych - liczba neuronów w warstwie WYJŚCIOWE: {layer_sizes_array}")
     print(f"Użycie biasu: {'Tak' if use_bias else 'Nie'}")
 
+
     return layer_sizes_array, use_bias
+
+def mode_menu():
+    print("\n--- Co chcesz zrobić? ---")
+    print("1. Ucz sieć")
+    print("2. Testuj sieć")
+    print("3. Zapisz model sieci")
+    print("4. Wczytaj model sieci")
+    print("5. Utwórz model sieci")
+    print("6. Wyjdź")
+
+    while True:
+        choice = input("Wybierz opcję (1-6): ").strip()
+        if choice == '1':
+            return "learn"
+        elif choice == '2':
+            return "test"
+        elif choice == '3':
+            return "save"
+        elif choice == '4':
+            return "load"
+        elif choice == '5':
+            return "create"
+        elif choice == '6':
+            return "exit"
+        else:
+            print("Nieprawidłowy wybór. Wpisz numer od 1 do 6.")
+
+
+def how_much_echos():
+    while True:
+        try:
+            num_epochs_str = input("Podaj liczbę epok (1-1000) liczba całkowita: ")
+            num_epochs = int(num_epochs_str)
+            if 1 <= num_epochs <= 1000:
+                return num_epochs
+            else:
+                print("Liczba epok musi być w zakresie od 1 do 1000. Spróbuj ponownie.")
+        except ValueError:
+            print("Nieprawidłowe dane. Wprowadź liczbę całkowitą. Spróbuj ponownie.")
+
+def shuffle_data_menu():
+    shuffle_data = None
+    while shuffle_data is None:
+        shuffle_data = input("Czy pomieszać dane? (tak/nie): ").strip().lower()
+        if shuffle_data in ['t', 'tak', 'yes', 'y']:
+            shuffle_data = True
+            return shuffle_data
+        elif shuffle_data in ['n', 'nie', 'no']:
+            shuffle_data = False
+            return shuffle_data
+        else:
+            print("Nieprawidłowy wybór. Wpisz 'tak' lub 'nie'.")
+
+
+# Zapis do pliku - serializacja obiketu - zapis w postaci bajtów
+def save_mlp_to_file(mlp):
+    filename = input("Podaj nazwę pliku do zapisu modelu MLP (np. model.pkl): ")
+    try:
+        with open(filename, 'wb') as f:
+            pickle.dump(mlp, f)
+        print(f"Model MLP został pomyślnie zapisany do pliku '{filename}'.")
+    except Exception as e:
+        print(f"Wystąpił błąd podczas zapisywania modelu: {e}")
+
+# Wczytaj z pliku
+def load_mlp_from_file():
+    filename = input("Podaj nazwę pliku do wczytania modelu MLP (np. model.pkl): ")
+    try:
+        with open(filename, 'rb') as f:
+            mlp = pickle.load(f)
+        print(f"Model MLP został pomyślnie wczytany z pliku '{filename}'.")
+        return mlp
+    except FileNotFoundError:
+        print(f"Błąd: Plik '{filename}' nie został znaleziony.")
+        return None
+    except Exception as e:
+        print(f"Wystąpił błąd podczas wczytywania modelu: {e}")
+        return None
+
+
 

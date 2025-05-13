@@ -11,7 +11,7 @@ class Neuron:
             raise ValueError("Liczba wejść musi być dodatnią liczbą całkowitą.")
 
         self.num_inputs = num_inputs
-        self.weights = (np.random.rand(num_inputs) * 2) - 1
+        self.weights = (np.random.rand(num_inputs) * 2) - 1 # Generowanie wektora wag z <0,1) * 2 - 1 = <-1,1)
         if use_bias:
             self.bias = (np.random.rand() * 2) - 1
         else:
