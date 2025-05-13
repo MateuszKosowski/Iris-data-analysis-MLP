@@ -137,5 +137,47 @@ def load_mlp_from_file():
         print(f"Wystąpił błąd podczas wczytywania modelu: {e}")
         return None
 
+def use_momentum_menu():
+    use_momentum = None
+    while use_momentum is None:
+        choice = input("Czy chcesz użyć momentum podczas uczenia? (tak/nie): ").strip().lower()
+        if choice in ['t', 'tak', 'yes', 'y']:
+            use_momentum = True
+            return use_momentum
+        elif choice in ['n', 'nie', 'no']:
+            use_momentum = False
+            return use_momentum
+        else:
+            print("Nieprawidłowy wybór. Wpisz 'tak' lub 'nie'.")
+
+def epochs_or_precision():
+    choice = None
+    while choice not in ['e', 'epoka', 'epoch', 'p', 'precyzja', 'precision']:
+        choice = input("Warunek zakończenia nauki (epoka/precyzja): ").strip().lower()
+        if choice in ['e', 'epoka', 'epoch']:
+            choice = "epoch"
+            return choice
+        elif choice in ['p', 'precyzja', 'precision']:
+            choice = "precision"
+            return choice
+        else:
+            print("Nieprawidłowy wybór. Wpisz 'e' lub 'p'.")
+
+def give_precision():
+    precision = None
+    while precision is None:
+        try:
+            precision_str = input("Podaj docelową wartość błędu MSE (od 0.001 do 0.999): ")
+            precision_val = float(precision_str)
+            if 0.001 <= precision_val <= 0.999:
+                precision = precision_val
+                return precision
+            else:
+                print("Wartość MSE musi być w zakresie od 0.001 do 0.999. Spróbuj ponownie.")
+                precision = None  # Resetuj, aby pętla kontynuowała
+        except ValueError:
+            print("Nieprawidłowe dane. Wprowadź liczbę zmiennoprzecinkową. Spróbuj ponownie.")
+            precision = None # Resetuj, aby pętla kontynuowała
+
 
 

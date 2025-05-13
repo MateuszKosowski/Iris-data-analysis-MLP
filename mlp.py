@@ -52,7 +52,7 @@ class MLP:
 
         return current_outputs
 
-    def backward_pass(self, target_outputs_vector):
+    def backward_pass(self, target_outputs_vector, use_momentum):
 
         # --- Krok 1: Warstwa wyjściowa ---
 
@@ -61,7 +61,7 @@ class MLP:
         for i, neuron in enumerate(output_layer.neurons):
             neuron.calculate_delta(target_outputs_vector[i])  # Przekazujemy odpowiedni element celu
             neuron.calculate_gradient()  # Obliczamy gradienty wag dla tego neuronu
-            neuron.update_weights()  # Aktualizujemy wagi i bias tego neuronu
+            neuron.update_weights(use_momentum)  # Aktualizujemy wagi i bias tego neuronu
 
         # --- Krok 2: Warstwy ukryte (od końca do początku) ---
 
@@ -79,7 +79,7 @@ class MLP:
 
                 neuron_hj.calculate_delta(propagated_error_to_hj)
                 neuron_hj.calculate_gradient()
-                neuron_hj.update_weights()  # aktualizujemy wagi tej warstwy ukrytej
+                neuron_hj.update_weights(use_momentum)  # aktualizujemy wagi tej warstwy ukrytej
 
 
     def calculate_mse(self, current_outputs, target_outputs):

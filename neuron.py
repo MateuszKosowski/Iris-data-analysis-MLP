@@ -72,13 +72,18 @@ class Neuron:
         # Obliczenie gradientu
         self.gradient = self.delta * self.last_inputs_to_neuron
 
-    def update_weights(self):
+    def update_weights(self, use_momentum):
 
-        # Aktualizacja wag
-        self.last_weights = copy.deepcopy(self.weights)  # Zapisanie starych wag
-        self.weights_velocity = (self.momentum_param * self.weights_velocity) - (self.learning_rate * self.gradient)
-        self.weights += self.weights_velocity
+        if use_momentum:
+            # Aktualizacja wag
+            self.last_weights = copy.deepcopy(self.weights)  # Zapisanie starych wag
+            self.weights_velocity = (self.momentum_param * self.weights_velocity) - (self.learning_rate * self.gradient)
+            self.weights += self.weights_velocity
 
-        # Aktualizacja biasu
-        self.bias_velocity = (self.momentum_param * self.bias_velocity) - (self.learning_rate * self.delta)
-        self.bias += self.bias_velocity
+            # Aktualizacja biasu
+            self.bias_velocity = (self.momentum_param * self.bias_velocity) - (self.learning_rate * self.delta)
+            self.bias += self.bias_velocity
+        else:
+            self.last_weights = copy.deepcopy(self.weights)  # Zapisanie starych wag
+            self.weights = self.last_weights - self.learning_rate * self.gradient
+            self.bias = self.bias - self.learning_rate * self.delta
