@@ -75,7 +75,7 @@ class MLP:
                 propagated_error_to_hj = 0.0 # Zmienna do przechowywania błędu propagowanego do neuronu ukrytego
 
                 for k_idx, neuron_k_next in enumerate(next_layer.neurons): # k_idx - indeks neuronu w warstwie wyjściowej
-                    propagated_error_to_hj += neuron_k_next.delta * neuron_k_next.weights[j_idx]
+                    propagated_error_to_hj += neuron_k_next.delta * neuron_k_next.last_weights[j_idx] # musi być last_weight, bo aktualizacja nastąpiła już w warstwie wyjściowej
 
                 neuron_hj.calculate_delta(propagated_error_to_hj)
                 neuron_hj.calculate_gradient()
