@@ -1,4 +1,3 @@
-from pandas.io.stata import precision_loss_doc
 
 from mlp import MLP
 from menu import get_network_config_from_user, mode_menu, save_mlp_to_file, load_mlp_from_file, how_much_echos, \
@@ -68,8 +67,7 @@ def main():
 
 
                 # Train labels jako wektory
-                train_labels_vector = np.zeros((len(train_labels),
-                                                num_output_classes))  # Tworzona jest nowa tablica z zerami o wymiarach (len(train_labels), num_output_classes) - 105x3
+                train_labels_vector = np.zeros((len(train_labels),num_output_classes))  # Tworzona jest nowa tablica z zerami o wymiarach (len(train_labels), num_output_classes) - 105x3
                 for j, label in enumerate(train_labels):  # iteracja dla każdej etykiety w train_labels
                     train_labels_vector[j, label] = 1  # Ustawienie wartości 1 w odpowiedniej kolumnie dla danej etykiety
 
@@ -163,69 +161,136 @@ def main():
         # Tryb testowy
         elif mode == "test":
             if is_mlp_created:
-                # Inicjalizacja macierzy pomyłek
-                confusion_matrix = np.zeros((num_output_classes, num_output_classes), dtype=int)
 
-                test_labels_vector = np.zeros((len(test_labels), num_output_classes))
-                for j, label in enumerate(test_labels):
-                    test_labels_vector[j, label] = 1
+                # Inicjalizacja macierzy pomyłek
+                confusion_matrix = np.zeros((num_output_classes, num_output_classes), dtype=int) # Tablica 3x3
+
+                # Przygotuj wektory etykiet testowych w formacie one-hot
+                test_labels_one_hot = np.zeros((len(test_labels), num_output_classes))
+                for j, label_val in enumerate(test_labels):
+                    test_labels_one_hot[j, int(label_val)] = 1
 
                 print("\n--- Rozpoczęcie Testowania ---")
-                with open("test_log.txt", "w") as log_file:
-                    log_file.write("Wejscie;Blad calkowity;Wzorzec oczekiwany;Bledy na wyjsciach;Wyjscia neuronow wyjsciowych;Wagi neuronow wyjsciowych;Wyjscia neuronow ukrytych;Wagi neuronow ukrytych\n")
-                    for i in range(len(test_features)):
-                        input_sample = test_features[i]
-                        true_label_numeric = test_labels[i]
-                        original_label_vector = test_labels_vector[i]  # Wektor one-hot do wyświetlania
 
-                        # Forward pass z zapisem wyjść warstw
-                        hidden_outputs = []
-                        current_outputs = input_sample
-                        for layer in mlp_network.layers[:-1]:
-                            layer_outputs = np.array([neuron.calculate_output(current_outputs) for neuron in layer.neurons])
-                            hidden_outputs.append(layer_outputs)
-                            current_outputs = layer_outputs
-                        # Warstwa wyjściowa
-                        output_layer = mlp_network.layers[-1]
-                        output_probabilities = np.array([neuron.calculate_output(current_outputs) for neuron in output_layer.neurons])
-                        predicted_label_numeric = np.argmax(output_probabilities)
+                # Nazwa pliku logu
+                log_filename = "test_details_log.csv"  #
 
-                        # Aktualizacja macierzy pomyłek
-                        confusion_matrix[true_label_numeric, predicted_label_numeric] += 1
+                try:
+                    with open(log_filename, "w") as log_file:
+                        # --- Przygotowanie Nagłówka dla pliku CSV ---
+                        header_parts = [
+                            "Wzorzec_Wejsciowy", # wzorca wejściowego
+                            "Blad_Calkowity_MSE_Wzorca", # popełnionego przez sieć błędu dla całego wzorca
+                            "Pozadany_Wzorzec_Odpowiedzi", # pożądanego wzorca odpowiedzi
+                            "Bledy_Na_Wyjsciach_Ostatniej_Warstwy",  # błędów popełnionych na poszczególnych wyjściach sieci
+                            "Wartosci_Wyjsciowe_Neuronow_Wyjsciowych" # wartości wyjściowych neuronów wyjściowych
+                        ]
 
-                        # Obliczenia błędów
-                        error_vector = output_probabilities - original_label_vector
-                        total_error = np.mean((output_probabilities - original_label_vector) ** 2)
+                        # Nagłówki dla wag i biasów neuronów wyjściowych
+                        output_layer_obj = mlp_network.layers[-1]
+                        output_layer_number = len(mlp_network.layers)
+                        for neuron_idx in range(output_layer_obj.num_neurons):
+                            for weight_idx in range(output_layer_obj.num_input_per_neuron):
+                                header_parts.append(f"Waga_Warstwa_{output_layer_number}_Neuron_{neuron_idx}_Polaczenie_{weight_idx}") # wag neuronów wyjściowych - POŁĄCZENIA
+                                if mlp_network.use_bias:
+                                    header_parts.append(f"Bias_Warstwa_{output_layer_number}_Neuron_{neuron_idx}") # wag neuronów wyjściowych - BIAS
 
-                        # Wagi neuronów wyjściowych
-                        output_weights = [neuron.weights.tolist() for neuron in output_layer.neurons]
-                        # Wagi neuronów ukrytych (od ostatniej do pierwszej warstwy ukrytej)
-                        hidden_weights = []
-                        for layer in reversed(mlp_network.layers[:-1]):
-                            hidden_weights.append([neuron.weights.tolist() for neuron in layer.neurons])
+                        # Nagłówki dla wyjść, wag i biasów neuronów ukrytych
+                        # Kolejność: od warstw dalszych (bliżej wyjścia) do bliższych wejścia
+                        for layer_idx in range(len(mlp_network.layers) - 2, -1, -1):  # Od ostatniej ukrytej do pierwszej ukrytej - argumenty: start, stop, step
+                            hidden_layer_obj = mlp_network.layers[layer_idx]
+                            # Wyjścia neuronów ukrytych
+                            header_parts.append(f"Wartosci_Wyjsciowe_Warstwy_Ukrytej_{len(mlp_network.layers) - 1 - layer_idx}")  # wartości wyjściowych neuronów ukrytych - od 1
+                            # Wagi i biasy neuronów ukrytych
+                            for n_idx in range(hidden_layer_obj.num_neurons):
+                                for w_idx in range(hidden_layer_obj.num_input_per_neuron):
+                                    header_parts.append(f"Waga_Warstywy_Ukrytej_{len(mlp_network.layers) - 1 - layer_idx}_Neuron_{n_idx}_Polaczenie_{w_idx}")
+                                if mlp_network.use_bias:
+                                    header_parts.append(f"Bias_Warstywy_Ukrytej_{len(mlp_network.layers) - 1 - layer_idx}_Neuron_{n_idx}")
 
-                        # Logowanie do pliku
-                        log_file.write(
-                            f"{np.round(input_sample, 3).tolist()};"
-                            f"{total_error:.6f};"
-                            f"{original_label_vector.tolist()};"
-                            f"{np.round(error_vector, 6).tolist()};"
-                            f"{np.round(output_probabilities, 6).tolist()};"
-                            f"{output_weights};"
-                            f"{[np.round(h, 6).tolist() for h in hidden_outputs]};"
-                            f"{hidden_weights}\n"
-                        )
+                        log_file.write("\t".join(header_parts) + "\n")  # Użyj tab jako separatora dla CSV
 
-                        output_rounded = np.round(output_probabilities, 3)
-                        print("--------------------------------------")
-                        print(f"  Próbka testowa {i + 1}:")
-                        print(f"    Wejście : {np.round(input_sample, 2)}")
-                        print(f"    Cel (prawidłowa klasa - one-hot): {original_label_vector}")
-                        print(f"    Cel (prawidłowa klasa - numeryczna): {true_label_numeric}")
-                        print(f"    Wyjście (prawdopodobieństwa): {output_rounded}")
-                        print(f"    Przewidziana klasa (numeryczna): {predicted_label_numeric}")
+                        # --- Pętla po próbkach testowych ---
+                        for i in range(len(test_features)):
+                            input_sample = test_features[i]
+                            true_label_numeric = int(test_labels[i])
+                            target_one_hot_vector = test_labels_one_hot[i] # zmienna
 
-                print("\n--- Zakończono Testowanie ---")
+                            # KROK 1: forward pass
+                            output_probabilities = mlp_network.forward_pass(input_sample)
+                            predicted_label_numeric = np.argmax(output_probabilities) # Największa wartość z listy
+
+                            # Aktualizacja macierzy pomyłek
+                            confusion_matrix[true_label_numeric, predicted_label_numeric] += 1 # Wiesze to prawdziwy gatunek, kolumny to predykcja
+
+                            # --- Zbieranie danych do logowania dla bieżącej próbki ---
+
+                            # 1. Wzorzec wejściowy
+                            log_data_for_sample = [str(np.round(input_sample, 4).tolist())]
+
+                            # 2. Popełniony przez sieć błąd dla całego wzorca (MSE)
+                            mse_for_sample = mlp_network.calculate_mse(output_probabilities, target_one_hot_vector)
+                            log_data_for_sample.append(f"{mse_for_sample:.6f}")
+
+                            # 3. Pożądany wzorzec odpowiedzi (one-hot)
+                            log_data_for_sample.append(str(target_one_hot_vector.tolist()))
+
+                            # 4. Błędy popełnione na poszczególnych wyjściach sieci (rzeczywiste minus cel)
+                            error_vector = output_probabilities - target_one_hot_vector
+                            log_data_for_sample.append(str(np.round(error_vector, 6).tolist()))
+
+                            # 5. Wartości wyjściowe neuronów wyjściowych
+                            log_data_for_sample.append(str(np.round(output_probabilities, 6).tolist()))
+
+
+                            # 6. Wagi i biasy neuronów wyjściowych
+                            for neuron in output_layer_obj.neurons:
+                                # Jeśli test jest po treningu, to są to wagi po ostatniej aktualizacji.
+                                log_data_for_sample.append(str(np.round(neuron.weights, 6).tolist()))
+                                if mlp_network.use_bias:
+                                    log_data_for_sample.append(f"{neuron.bias:.6f}")
+
+                            # 7. Wartości wyjściowe neuronów ukrytych
+                            # 8. Wagi neuronów ukrytych (połączenia + bias)
+                            # Kolejność: od warstw dalszych (bliżej wyjścia) do bliższych wejścia
+                            for layer_idx in range(len(mlp_network.layers) - 2, -1, -1):
+                                hidden_layer_obj = mlp_network.layers[layer_idx]
+
+                                # 7. Wartości wyjściowe neuronów ukrytych (aktywacje tej warstwy)
+                                # .outputs jest ustawiane w Layer.calculate_outputs(), które jest częścią MLP.forward_pass()
+                                log_data_for_sample.append(str(np.round(hidden_layer_obj.outputs, 6).tolist()))
+
+                                # 8. Wagi i biasy neuronów ukrytych tej warstwy
+                                for neuron in hidden_layer_obj.neurons:
+                                    log_data_for_sample.append(str(np.round(neuron.weights, 6).tolist()))
+                                    if mlp_network.use_bias:
+                                        log_data_for_sample.append(f"{neuron.bias:.6f}")
+
+                            # Zapisz wiersz danych do pliku CSV
+                            log_file.write("\t".join(log_data_for_sample) + "\n")
+
+                            # Pokaż kilka pierwszych/ostatnich
+                            if i < 5 or i >= len(test_features) - 5:
+                                output_rounded = np.round(output_probabilities, 3)
+                                print("--------------------------------------")
+                                print(f"  Próbka testowa {i + 1}:")
+                                print(f"    Wejście : {np.round(input_sample, 2)}")
+                                print(f"    Cel (one-hot): {target_one_hot_vector}")
+                                print(f"    Cel (numeryczna): {true_label_numeric}")
+                                print(f"    Wyjście (prawdopodobieństwa): {output_rounded}")
+                                print(f"    Przewidziana klasa (numeryczna): {predicted_label_numeric}")
+                                print(f"    MSE próbki: {mse_for_sample:.6f}")
+
+                    print(f"\nSzczegółowe wyniki testowania zapisano do pliku: {log_filename}")
+                    print("--- Zakończono Testowanie ---")
+
+                except IOError:
+                    print(f"BŁĄD: Nie można zapisać do pliku logu '{log_filename}'. Sprawdź uprawnienia.")
+                except Exception as e:
+                    print(f"Wystąpił nieoczekiwany błąd podczas testowania i logowania: {e}")
+                    import traceback
+                    traceback.print_exc()
+
 
                 # Obliczanie i wyświetlanie statystyk
                 print("\n--- Wyniki Testowania ---")
@@ -248,12 +313,12 @@ def main():
                 # Precision, Recall, F-measure
                 print("\nMetryki oceny (Precision, Recall, F-measure) dla każdej klasy:")
                 for class_idx in range(num_output_classes):
-                    TP = confusion_matrix[class_idx, class_idx]  # True Positives
-                    FP = np.sum(confusion_matrix[:, class_idx]) - TP  # False Positives
-                    FN = np.sum(confusion_matrix[class_idx, :]) - TP  # False Negatives
+                    tp = confusion_matrix[class_idx, class_idx]  # True Positives
+                    fp = np.sum(confusion_matrix[:, class_idx]) - tp  # False Positives
+                    fn = np.sum(confusion_matrix[class_idx, :]) - tp  # False Negatives
 
-                    precision = TP / (TP + FP) if (TP + FP) > 0 else 0
-                    recall = TP / (TP + FN) if (TP + FN) > 0 else 0
+                    precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+                    recall = tp / (tp + fn) if (tp + fn) > 0 else 0
                     f_measure = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
 
                     print(f"  Klasa {class_idx}:")
@@ -268,7 +333,7 @@ def main():
             if is_mlp_created and is_mlp_trained:
                 save_mlp_to_file(mlp_network)
             else:
-                print("Sieć nie istnieje lub nie została stworzona!")
+                print("Sieć nie istnieje lub nie została nauczona!")
 
         elif mode == "load":
             loaded_mlp = load_mlp_from_file()
