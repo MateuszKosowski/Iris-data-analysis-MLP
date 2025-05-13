@@ -171,26 +171,59 @@ def main():
                     test_labels_vector[j, label] = 1
 
                 print("\n--- Rozpoczęcie Testowania ---")
-                for i in range(len(test_features)):
-                    input_sample = test_features[i]
-                    # Używamy oryginalnych etykiet numerycznych do macierzy pomyłek
-                    true_label_numeric = test_labels[i]
-                    original_label_vector = test_labels_vector[i]  # Wektor one-hot do wyświetlania
+                with open("test_log.txt", "w") as log_file:
+                    log_file.write("Wejscie;Blad calkowity;Wzorzec oczekiwany;Bledy na wyjsciach;Wyjscia neuronow wyjsciowych;Wagi neuronow wyjsciowych;Wyjscia neuronow ukrytych;Wagi neuronow ukrytych\n")
+                    for i in range(len(test_features)):
+                        input_sample = test_features[i]
+                        true_label_numeric = test_labels[i]
+                        original_label_vector = test_labels_vector[i]  # Wektor one-hot do wyświetlania
 
-                    output_probabilities = mlp_network.forward_pass(input_sample)
-                    predicted_label_numeric = np.argmax(output_probabilities)
+                        # Forward pass z zapisem wyjść warstw
+                        hidden_outputs = []
+                        current_outputs = input_sample
+                        for layer in mlp_network.layers[:-1]:
+                            layer_outputs = np.array([neuron.calculate_output(current_outputs) for neuron in layer.neurons])
+                            hidden_outputs.append(layer_outputs)
+                            current_outputs = layer_outputs
+                        # Warstwa wyjściowa
+                        output_layer = mlp_network.layers[-1]
+                        output_probabilities = np.array([neuron.calculate_output(current_outputs) for neuron in output_layer.neurons])
+                        predicted_label_numeric = np.argmax(output_probabilities)
 
-                    # Aktualizacja macierzy pomyłek
-                    confusion_matrix[true_label_numeric, predicted_label_numeric] += 1
+                        # Aktualizacja macierzy pomyłek
+                        confusion_matrix[true_label_numeric, predicted_label_numeric] += 1
 
-                    output_rounded = np.round(output_probabilities, 3)
-                    print("--------------------------------------")
-                    print(f"  Próbka testowa {i + 1}:")
-                    print(f"    Wejście : {np.round(input_sample, 2)}")
-                    print(f"    Cel (prawidłowa klasa - one-hot): {original_label_vector}")
-                    print(f"    Cel (prawidłowa klasa - numeryczna): {true_label_numeric}")
-                    print(f"    Wyjście (prawdopodobieństwa): {output_rounded}")
-                    print(f"    Przewidziana klasa (numeryczna): {predicted_label_numeric}")
+                        # Obliczenia błędów
+                        error_vector = output_probabilities - original_label_vector
+                        total_error = np.mean((output_probabilities - original_label_vector) ** 2)
+
+                        # Wagi neuronów wyjściowych
+                        output_weights = [neuron.weights.tolist() for neuron in output_layer.neurons]
+                        # Wagi neuronów ukrytych (od ostatniej do pierwszej warstwy ukrytej)
+                        hidden_weights = []
+                        for layer in reversed(mlp_network.layers[:-1]):
+                            hidden_weights.append([neuron.weights.tolist() for neuron in layer.neurons])
+
+                        # Logowanie do pliku
+                        log_file.write(
+                            f"{np.round(input_sample, 3).tolist()};"
+                            f"{total_error:.6f};"
+                            f"{original_label_vector.tolist()};"
+                            f"{np.round(error_vector, 6).tolist()};"
+                            f"{np.round(output_probabilities, 6).tolist()};"
+                            f"{output_weights};"
+                            f"{[np.round(h, 6).tolist() for h in hidden_outputs]};"
+                            f"{hidden_weights}\n"
+                        )
+
+                        output_rounded = np.round(output_probabilities, 3)
+                        print("--------------------------------------")
+                        print(f"  Próbka testowa {i + 1}:")
+                        print(f"    Wejście : {np.round(input_sample, 2)}")
+                        print(f"    Cel (prawidłowa klasa - one-hot): {original_label_vector}")
+                        print(f"    Cel (prawidłowa klasa - numeryczna): {true_label_numeric}")
+                        print(f"    Wyjście (prawdopodobieństwa): {output_rounded}")
+                        print(f"    Przewidziana klasa (numeryczna): {predicted_label_numeric}")
 
                 print("\n--- Zakończono Testowanie ---")
 
@@ -218,7 +251,6 @@ def main():
                     TP = confusion_matrix[class_idx, class_idx]  # True Positives
                     FP = np.sum(confusion_matrix[:, class_idx]) - TP  # False Positives
                     FN = np.sum(confusion_matrix[class_idx, :]) - TP  # False Negatives
-                    # TN = np.sum(confusion_matrix) - (TP + FP + FN) # True Negatives, niepotrzebne do tych metryk
 
                     precision = TP / (TP + FP) if (TP + FP) > 0 else 0
                     recall = TP / (TP + FN) if (TP + FN) > 0 else 0
