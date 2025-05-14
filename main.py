@@ -6,6 +6,8 @@ from learn import learn
 import pandas as pd
 import numpy as np
 
+from report import report
+
 
 def main():
 
@@ -38,9 +40,9 @@ def main():
         train_labels_vector[j, label] = 1
 
     # Test label jako wektory
-    test_labels_one_hot = np.zeros((len(test_labels), num_output_classes))
+    test_labels_vector = np.zeros((len(test_labels), num_output_classes))
     for j, label_val in enumerate(test_labels):
-        test_labels_one_hot[j, int(label_val)] = 1
+        test_labels_vector[j, int(label_val)] = 1
 
     # Flagi
     mlp_network = None
@@ -132,7 +134,7 @@ def main():
                         for i in range(len(test_features)):
                             input_sample = test_features[i]
                             true_label_numeric = int(test_labels[i])
-                            target_one_hot_vector = test_labels_one_hot[i] # zmienna
+                            target_one_hot_vector = test_labels_vector[i] # zmienna
 
                             # KROK 1: forward pass
                             output_probabilities = mlp_network.forward_pass(input_sample)
@@ -280,7 +282,9 @@ def main():
 
             print(f"\n---- Szybkość nauki (ile epok do MSE < 0.02) ----")
 
-
+        elif mode == "report":
+            mlp_network = report(train_features, test_features, train_labels_vector, test_labels_vector, train_labels, test_labels)
+            is_mlp_created = True
 
         elif mode == "exit":
             print("\n--- Zakończenie ---")
