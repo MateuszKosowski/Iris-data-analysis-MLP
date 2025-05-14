@@ -66,10 +66,12 @@ def mode_menu():
     print("3. Zapisz model sieci")
     print("4. Wczytaj model sieci")
     print("5. Utwórz model sieci")
-    print("6. Wyjdź")
+    print("6. Tryb autoencoder")
+    print("7. Do sprawozdania")
+    print("8. Wyjdź")
 
     while True:
-        choice = input("Wybierz opcję (1-6): ").strip()
+        choice = input("Wybierz opcję (1-8): ").strip()
         if choice == '1':
             return "learn"
         elif choice == '2':
@@ -81,9 +83,13 @@ def mode_menu():
         elif choice == '5':
             return "create"
         elif choice == '6':
+            return "autoencoder"
+        elif choice == '7':
+            return "report"
+        elif choice == '8':
             return "exit"
         else:
-            print("Nieprawidłowy wybór. Wpisz numer od 1 do 6.")
+            print("Nieprawidłowy wybór. Wpisz numer od 1 do 8.")
 
 
 def how_much_echos():

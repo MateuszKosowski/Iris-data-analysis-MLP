@@ -10,6 +10,12 @@ dist/
 build/
 *.so
 
+# Wszystkie modele
+*.pkl 
+mse_log.txt
+test_details_log.csv
+
+
 # Pliki wirtualnego środowiska
 venv/
 .env/

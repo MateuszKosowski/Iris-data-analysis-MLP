@@ -1,7 +1,8 @@
-
+from autoencoder import create_autoencoder_mlp, train_autoencoder, get_hidden_layer_outputs
 from mlp import MLP
 from menu import get_network_config_from_user, mode_menu, save_mlp_to_file, load_mlp_from_file, how_much_echos, \
     shuffle_data_menu, use_momentum_menu, epochs_or_precision, give_precision
+from learn import learn
 import pandas as pd
 import numpy as np
 
@@ -25,18 +26,28 @@ def main():
     test_labels = data_test['Gatunek'].values
 
     # Rozmiar zbioru treningowego
-    num_input_features = train_features.shape[1]
-    num_output_classes = len(np.unique(train_labels))
+    num_input_features = train_features.shape[1] # Ile jest cech
+    num_output_classes = len(np.unique(train_labels)) # Ile jest klas irysów
     print(f"\nParametry sieci ustalone na podstawie danych:")
     print(f"  Liczba cech wejściowych: {num_input_features}")
     print(f"  Liczba klas wyjściowych: {num_output_classes}")
 
-    mlp_network = None
-    confusion_matrix = None
+    # Train labels jako wektory
+    train_labels_vector = np.zeros((len(train_labels), num_output_classes))
+    for j, label in enumerate(train_labels):
+        train_labels_vector[j, label] = 1
 
-    is_mlp_trained = False
+    # Test label jako wektory
+    test_labels_one_hot = np.zeros((len(test_labels), num_output_classes))
+    for j, label_val in enumerate(test_labels):
+        test_labels_one_hot[j, int(label_val)] = 1
+
+    # Flagi
+    mlp_network = None
     is_mlp_created = False
 
+
+    # ------ Główna pętla ------
     while True:
 
         mode = mode_menu()
@@ -48,115 +59,28 @@ def main():
             mlp_network = MLP(layer_sizes_array=architecture, use_bias=bias_flag)
             is_mlp_created = True
 
+
+
         # Tryb działania sieci
         elif mode == "learn":
             if is_mlp_created:
 
                 choice = epochs_or_precision()
                 if choice == "epoch":
+                    precision = 0.0
                     num_epochs = how_much_echos()
                 elif choice == "precision":
                     precision = give_precision()
                     num_epochs = 1000
 
                 num_samples = len(train_features)
-                shuffle_data = shuffle_data_menu()
-                use_momentum = use_momentum_menu()
+                shuffle_data_flag = shuffle_data_menu()
+                use_momentum_flag = use_momentum_menu()
+                learn(choice, num_epochs, precision, shuffle_data_flag, use_momentum_flag, mlp_network, train_features, train_labels_vector, num_samples)
 
-
-
-
-                # Train labels jako wektory
-                train_labels_vector = np.zeros((len(train_labels),num_output_classes))  # Tworzona jest nowa tablica z zerami o wymiarach (len(train_labels), num_output_classes) - 105x3
-                for j, label in enumerate(train_labels):  # iteracja dla każdej etykiety w train_labels
-                    train_labels_vector[j, label] = 1  # Ustawienie wartości 1 w odpowiedniej kolumnie dla danej etykiety
-
-                if choice == "epoch":
-
-                    print(f"\n--- Rozpoczęcie Treningu ({num_epochs} epok) ---")
-
-                    for epoch in range(num_epochs):
-
-                        if shuffle_data:
-                            permutation = np.random.permutation(num_samples)  # Zwraca losową permutację indeksów
-                            shuffled_train_features = train_features[permutation]  # Nowa tablica z przetasowanymi danymi
-                            shuffled_train_labels_vector = train_labels_vector[permutation]  # Przetasowanie etykiet w ten sam sposób aby nie stracić informacji o etykietach
-
-                        total_epoch_error = 0.0  # Błąd epoki
-
-                        for i in range(num_samples):
-
-                            if shuffle_data:
-                                input_sample = shuffled_train_features[i]  # Próbka wejściowa
-                                target_label_vector = shuffled_train_labels_vector[i]  # Wektor etykiet docelowych
-                            else:
-                                input_sample = train_features[i]
-                                target_label_vector = train_labels_vector[i]
-
-                            # Krok 1: Przetwarzanie danych przez sieć (forward pass)
-                            current_outputs = mlp_network.forward_pass(input_sample)
-
-                            # Krok 2: Obliczanie błędów i aktualizacja wag (backward pass)
-                            mlp_network.backward_pass(target_label_vector, use_momentum)
-
-                            # Oblicz błąd dla tej próbki i dodaj do błędu epoki
-                            error_for_sample = mlp_network.calculate_mse(current_outputs, target_label_vector)
-                            total_epoch_error += error_for_sample
-
-                        # Wyświetl średni błąd dla epoki
-                        average_epoch_error = total_epoch_error / num_samples
-
-                        if (epoch + 1) % 10 == 0:  # Wyświetl co 10 epok
-                            print(f"Epoka {epoch + 1}/{num_epochs} zakończona, MSE: {average_epoch_error:.6f}")
-                            with open("mse_log.txt", "a") as f:
-                                f.write(f"{epoch + 1},{average_epoch_error:.6f}\n")
-
-                elif choice == "precision":
-                    print(f"\n--- Rozpoczęcie Treningu ({precision} MSE) ---")
-
-                    average_epoch_error = 2.0
-                    counter = 0
-                    while  average_epoch_error > precision and counter < num_epochs:
-                        total_epoch_error = 0.0
-                        counter += 1
-                        if shuffle_data:
-                            permutation = np.random.permutation(num_samples)  # Zwraca losową permutację indeksów
-                            shuffled_train_features = train_features[
-                                permutation]  # Nowa tablica z przetasowanymi danymi
-                            shuffled_train_labels_vector = train_labels_vector[
-                                permutation]  # Przetasowanie etykiet w ten sam sposób aby nie stracić informacji o etykietach
-
-                        for i in range(num_samples):
-                            if shuffle_data:
-                                input_sample = shuffled_train_features[i]  # Próbka wejściowa
-                                target_label_vector = shuffled_train_labels_vector[i]  # Wektor etykiet docelowych
-                            else:
-                                input_sample = train_features[i]
-                                target_label_vector = train_labels_vector[i]
-
-                            # Krok 1: Przetwarzanie danych przez sieć (forward pass)
-                            current_outputs = mlp_network.forward_pass(input_sample)
-
-                            # Krok 2: Obliczanie błędów i aktualizacja wag (backward pass)
-                            mlp_network.backward_pass(target_label_vector, use_momentum)
-
-                            # Oblicz błąd dla tej próbki i dodaj do błędu epoki
-                            error_for_sample = mlp_network.calculate_mse(current_outputs, target_label_vector)
-                            total_epoch_error += error_for_sample
-
-                            # Wyświetl średni błąd dla epoki
-                        average_epoch_error = total_epoch_error / num_samples
-
-                        if (counter + 1) % 10 == 0:  # Wyświetl co 10 epok
-                            print(f"Epoka {counter + 1}/{num_epochs} zakończona, MSE: {average_epoch_error:.6f}")
-                            with open("mse_log.txt", "a") as f:
-                                f.write(f"{counter + 1},{average_epoch_error:.6f}\n")
-
-
-                is_mlp_trained = True
-                print("\n--- Zakończono Trening ---")
             else:
                 print("Sieć nie została stworzona!")
+
 
         # Tryb testowy
         elif mode == "test":
@@ -164,11 +88,6 @@ def main():
 
                 # Inicjalizacja macierzy pomyłek
                 confusion_matrix = np.zeros((num_output_classes, num_output_classes), dtype=int) # Tablica 3x3
-
-                # Przygotuj wektory etykiet testowych w formacie one-hot
-                test_labels_one_hot = np.zeros((len(test_labels), num_output_classes))
-                for j, label_val in enumerate(test_labels):
-                    test_labels_one_hot[j, int(label_val)] = 1
 
                 print("\n--- Rozpoczęcie Testowania ---")
 
@@ -329,18 +248,40 @@ def main():
             else:
                 print("Sieć nie została stworzona!")
 
+
         elif mode == "save":
-            if is_mlp_created and is_mlp_trained:
+            if is_mlp_created:
                 save_mlp_to_file(mlp_network)
             else:
-                print("Sieć nie istnieje lub nie została nauczona!")
+                print("Sieć nie istnieje!")
+
 
         elif mode == "load":
             loaded_mlp = load_mlp_from_file()
             if loaded_mlp:
                 mlp_network = loaded_mlp
                 is_mlp_created = True
-                is_mlp_trained = True
+
+
+        elif mode == "autoencoder":
+
+            print(f"\n---- Nauka z Bias ----")
+            mlp_network = create_autoencoder_mlp()
+            train_autoencoder(mlp_network, 300, 0.6, False, 0)
+            hidde_layer_outputs = get_hidden_layer_outputs(mlp_network)
+            for i in range(len(hidde_layer_outputs)):
+                print(f"Wartość wyjściowa neuronów ukrytych, po nauce, dla paternu {i + 1}: {hidde_layer_outputs[i]}")
+
+            print(f"\n---- Nauka bez Bias ----")
+            mlp_network = create_autoencoder_mlp(False)
+            train_autoencoder(mlp_network, 300, 0.6, False, 0)
+            hidde_layer_outputs = get_hidden_layer_outputs(mlp_network)
+            for i in range(len(hidde_layer_outputs)):
+                print(f"Wartość wyjściowa neuronów ukrytych, po nauce, dla paternu {i + 1}: {hidde_layer_outputs[i]}")
+
+            print(f"\n---- Szybkość nauki (ile epok do MSE < 0.02) ----")
+
+
 
         elif mode == "exit":
             print("\n--- Zakończenie ---")

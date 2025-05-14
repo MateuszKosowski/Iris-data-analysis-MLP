@@ -2,7 +2,7 @@ import numpy as np
 from layer import Layer
 
 class MLP:
-    def __init__(self, layer_sizes_array, use_bias=True, learning_rate=0.01):
+    def __init__(self, layer_sizes_array, use_bias=True, learning_rate=0.02, momentum=0.9):
         self.layers = []
         self.num_layers = len(layer_sizes_array) # Liczba warstw (ukryte + wyjściowa)
         self.layer_sizes_array = layer_sizes_array # Tablica z liczbą neuronów wejść w każdej warstwie
@@ -25,13 +25,15 @@ class MLP:
                               num_input_per_neuron=num_inputs_per_neuron,
                               use_bias=self.use_bias,
                               learning_rate=learning_rate,
-                              is_last_layer=True)
+                              is_last_layer=True,
+                              momentum=momentum)
 
             else:
                 layer = Layer(num_neurons=num_neurons_in_layer,
                               num_input_per_neuron=num_inputs_per_neuron,
                               use_bias=self.use_bias,
-                              learning_rate=learning_rate)
+                              learning_rate=learning_rate,
+                              momentum=momentum)
 
             self.layers.append(layer)
 

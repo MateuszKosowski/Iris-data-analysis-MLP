@@ -5,7 +5,7 @@ import numpy as np
 class Neuron:
 
     # Konstruktor klasy Neuron
-    def __init__(self, num_inputs, use_bias, learning_rate, is_last_layer=False): # self oznacza instancję klasy w Pythonie, jest to konwencja
+    def __init__(self, num_inputs, use_bias, learning_rate, is_last_layer=False, momentum=0.9): # self oznacza instancję klasy w Pythonie, jest to konwencja
 
         if not isinstance(num_inputs, int) or num_inputs < 1:
             raise ValueError("Liczba wejść musi być dodatnią liczbą całkowitą.")
@@ -28,7 +28,7 @@ class Neuron:
         self.is_last_layer = is_last_layer  # Flaga, czy neuron jest w ostatniej warstwie
         self.weights_velocity = np.zeros(num_inputs)  # Wektory prędkości dla wag
         self.bias_velocity = 0  # Prędkość dla biasu
-        self.momentum_param = 0.9 # Parametr momentum
+        self.momentum_param = momentum # Parametr momentum
 
 
     #Sigmoid - zwraca wartość między 0 a 1. Po zsumowaniu, wag i biasu mówi na ile % neuron jest aktywowany, czyli np na ile % jest to pies lub nie.
@@ -73,6 +73,7 @@ class Neuron:
         self.gradient = self.delta * self.last_inputs_to_neuron
 
     def update_weights(self, use_momentum):
+
 
         if use_momentum:
             # Aktualizacja wag
