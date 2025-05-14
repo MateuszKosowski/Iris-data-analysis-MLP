@@ -15,13 +15,14 @@ autoencoder_architecture = (4, 2, 4) # 4 wejścia, 2 ukryte, 4 wyjścia
 def create_autoencoder_mlp(use_bias=True, architecture=autoencoder_architecture):
     return MLP(layer_sizes_array=architecture, use_bias=use_bias)
 
-def train_autoencoder(mlp_instance, epochs, learning_rate, use_momentum, momentum_coeff, patterns=autoencoder_patterns, shuffle_patterns=True, target_mse_for_stop=None):
+def train_autoencoder(mlp_instance, epochs, learning_rate, use_momentum, momentum_coeff, log_filename="mse_log_autoencoder.txt", patterns=autoencoder_patterns, shuffle_patterns=True, target_mse_for_stop=None):
     print(f"\n--- Trening Autoenkodera ---")
     print(f"Architektura: {mlp_instance.layer_sizes_array}, Bias: {mlp_instance.use_bias}")
     print(f"LR: {learning_rate}, Momentum: {momentum_coeff if use_momentum else 'Brak'}, Epoki: {epochs}")
     print(f"Liczba wzorców: {len(patterns)}")
 
-
+    # Przekształć cele na wektory kolumnowe, jeśli MLP.backward_pass tego oczekuje
+    # Na podstawie Twojego kodu, backward_pass przyjmuje płaski target_outputs_vector.
 
     # ustawienie momentum i wartośći dla każdego neuronu
     for layer in mlp_instance.layers:
@@ -29,33 +30,44 @@ def train_autoencoder(mlp_instance, epochs, learning_rate, use_momentum, momentu
             neuron.learning_rate = learning_rate
             neuron.momentum_param = momentum_coeff
 
-    for epoch in range(epochs):
-        current_patterns = list(patterns)
-        if shuffle_patterns:
-            random.shuffle(current_patterns)
+    try:
+        with open(log_filename, 'w') as log_file:
+            log_file.write("Epoch\tMSE\n") # Nagłówek pliku logu
 
-        total_epoch_error = 0.0
+            for epoch in range(epochs):
+                current_patterns = list(patterns)
+                if shuffle_patterns:
+                    random.shuffle(current_patterns)
 
-        for input_pattern, target_pattern in current_patterns:
+                total_epoch_error = 0.0
 
-            # Forward pass
-            output = mlp_instance.forward_pass(input_pattern)
+                for input_pattern, target_pattern in current_patterns:
 
-            # Backward pass
-            mlp_instance.backward_pass(target_pattern, use_momentum)  # Przekaż flagę use_momentum
+                    # Forward pass
+                    output = mlp_instance.forward_pass(input_pattern)
 
-            # Oblicz błąd dla wzorca
-            error_for_sample = mlp_instance.calculate_mse(output, target_pattern)
-            total_epoch_error += error_for_sample
+                    # Backward pass
+                    mlp_instance.backward_pass(target_pattern, use_momentum)  # Przekaż flagę use_momentum
 
-        average_epoch_error = total_epoch_error / len(patterns)
+                    # Oblicz błąd dla wzorca
+                    error_for_sample = mlp_instance.calculate_mse(output, target_pattern)
+                    total_epoch_error += error_for_sample
 
-        if (epoch + 1) % 10 == 0:  # Loguj co 10 epok dla autoenkodera
-            print(f"Epoka {epoch + 1}/{epochs}, MSE: {average_epoch_error:.8f}")
+                average_epoch_error = total_epoch_error / len(patterns)
 
-        if target_mse_for_stop is not None and average_epoch_error <= target_mse_for_stop:
-            print(f"Osiągnięto docelowy błąd MSE {target_mse_for_stop} w epoce {epoch + 1}.")
-            break
+                if (epoch + 1) % 10 == 0:  # Loguj co 10 epok dla autoenkodera
+                    log_file.write(f"{epoch + 1}\t{average_epoch_error:.8f}\n")
+
+                if target_mse_for_stop is not None and average_epoch_error <= target_mse_for_stop:
+                    print(f"Osiągnięto docelowy błąd MSE {target_mse_for_stop} w epoce {epoch + 1}.")
+                    log_file.write(f"{epoch + 1}\t{average_epoch_error:.8f}\t(Osiągnięto cel MSE)\n")
+                    break
+        print(f"Dane MSE zapisano do pliku: {log_filename}")
+    except IOError:
+        print(f"BŁĄD: Nie można zapisać do pliku logu '{log_filename}'. Sprawdź uprawnienia.")
+    except Exception as e:
+        print(f"Wystąpił nieoczekiwany błąd podczas logowania MSE: {e}")
+
 
     print(f"Trening zakończony. Końcowe MSE: {average_epoch_error:.8f}")
     return average_epoch_error

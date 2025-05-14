@@ -60,7 +60,6 @@ def main():
             is_mlp_created = True
 
 
-
         # Tryb działania sieci
         elif mode == "learn":
             if is_mlp_created:
@@ -267,14 +266,14 @@ def main():
 
             print(f"\n---- Nauka z Bias ----")
             mlp_network = create_autoencoder_mlp()
-            train_autoencoder(mlp_network, 300, 0.6, False, 0)
+            train_autoencoder(mlp_network, 300, 0.6, False, 0, "mse_log_autoencoder_bias.txt")
             hidde_layer_outputs = get_hidden_layer_outputs(mlp_network)
             for i in range(len(hidde_layer_outputs)):
                 print(f"Wartość wyjściowa neuronów ukrytych, po nauce, dla paternu {i + 1}: {hidde_layer_outputs[i]}")
 
             print(f"\n---- Nauka bez Bias ----")
             mlp_network = create_autoencoder_mlp(False)
-            train_autoencoder(mlp_network, 300, 0.6, False, 0)
+            train_autoencoder(mlp_network, 300, 0.6, False, 0, "mse_log_autoencoder_without_bias.txt")
             hidde_layer_outputs = get_hidden_layer_outputs(mlp_network)
             for i in range(len(hidde_layer_outputs)):
                 print(f"Wartość wyjściowa neuronów ukrytych, po nauce, dla paternu {i + 1}: {hidde_layer_outputs[i]}")
