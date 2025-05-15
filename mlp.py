@@ -39,6 +39,20 @@ class MLP:
 
         print("Sieć MLP utworzona.")
 
+    def set_learning_rate(self, learning_rate):
+        # Ustawienie nowego współczynnika uczenia
+        for layer in self.layers:
+            for neuron in layer.neurons:
+                neuron.learning_rate = learning_rate
+        print(f"Współczynnik uczenia ustawiony na {learning_rate}.")
+
+    def set_momentum(self, momentum):
+        # Ustawienie nowego współczynnika momentum
+        for layer in self.layers:
+            for neuron in layer.neurons:
+                neuron.momentum_param = momentum
+        print(f"Współczynnik momentum ustawiony na {momentum}.")
+
     # Przekazywanie wag do warstwy wyjściowej
     def forward_pass(self, inputs):
         # Sprawdzenie, czy liczba wejść zgadza się z pierwszą warstwą

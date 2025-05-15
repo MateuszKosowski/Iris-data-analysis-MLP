@@ -6,9 +6,10 @@ from matplotlib import pyplot as plt
 
 def report(train_features, test_features, train_labels_vector, test_labels_vector, train_labels, test_labels):
 
-    mlp_instance = MLP(layer_sizes_array=(4, 2, 3, 3), use_bias=True, learning_rate=0.08, momentum=0.9)
+    mlp_instance = MLP(layer_sizes_array=(4, 2, 3, 3), use_bias=True, learning_rate=0.2, momentum=0.2)
 
     # Przygotowanie danych
+    np.random.seed(50)  # Ustawienie ziarna dla powtarzalności permutacji
     permutation = np.random.permutation(len(train_features))
     train_features_to_use = train_features[permutation]
     train_label_vector_to_use = train_labels_vector[permutation]

@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def learn(choice, num_epochs, precision, shuffle_data, use_momentum, mlp_network, train_features, train_labels_vector, num_samples = None, filename='mse_log_train.txt'):
+def learn(choice, num_epochs, precision, shuffle_data, use_momentum, mlp_network, train_features, train_labels_vector, num_samples = None, filename='./logs/mse_log_train.txt'):
 
     #Czyszczenie pliku do zapisu
     with open(filename, "w") as f:
@@ -46,7 +46,7 @@ def learn(choice, num_epochs, precision, shuffle_data, use_momentum, mlp_network
 
 
 
-def learn_one_epoch(num_samples, num_epochs, use_momentum, mlp_network, train_features_to_use, train_label_vector_to_use, epoch = 0, filename='mse_log_train.txt'):
+def learn_one_epoch(num_samples, num_epochs, use_momentum, mlp_network, train_features_to_use, train_label_vector_to_use, epoch = 0, filename='./logs/mse_log_train.txt'):
     total_epoch_error = 0.0
 
     for i in range(num_samples):

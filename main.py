@@ -1,7 +1,8 @@
 from autoencoder import create_autoencoder_mlp, train_autoencoder, get_hidden_layer_outputs
 from mlp import MLP
 from menu import get_network_config_from_user, mode_menu, save_mlp_to_file, load_mlp_from_file, how_much_echos, \
-    shuffle_data_menu, use_momentum_menu, epochs_or_precision, give_precision
+    shuffle_data_menu, use_momentum_menu, epochs_or_precision, give_precision, set_momentum_value_menu, \
+    set_learning_rate_menu
 from learn import learn
 import pandas as pd
 import numpy as np
@@ -77,6 +78,11 @@ def main():
                 num_samples = len(train_features)
                 shuffle_data_flag = shuffle_data_menu()
                 use_momentum_flag = use_momentum_menu()
+                if use_momentum_flag:
+                    new_momentum_value = set_momentum_value_menu()
+                    mlp_network.set_momentum(new_momentum_value)
+                new_learning_rate = set_learning_rate_menu()
+                mlp_network.set_learning_rate(new_learning_rate)
                 learn(choice, num_epochs, precision, shuffle_data_flag, use_momentum_flag, mlp_network, train_features, train_labels_vector, num_samples)
 
             else:
@@ -93,7 +99,7 @@ def main():
                 print("\n--- Rozpoczęcie Testowania ---")
 
                 # Nazwa pliku logu
-                log_filename = "test_details_log.csv"  #
+                log_filename = "./logs/test_details_log.csv"  #
 
                 try:
                     with open(log_filename, "w") as log_file:

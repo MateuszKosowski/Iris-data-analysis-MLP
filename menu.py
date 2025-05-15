@@ -117,6 +117,39 @@ def shuffle_data_menu():
         else:
             print("Nieprawidłowy wybór. Wpisz 'tak' lub 'nie'.")
 
+def set_learning_rate_menu():
+    learning_rate = None
+    while learning_rate is None:
+        try:
+            learning_rate_str = input("Podaj współczynnik uczenia (0.01 - 0.5): ")
+            learning_rate_val = float(learning_rate_str)
+            if 0.01 <= learning_rate_val <= 0.5:
+                learning_rate = learning_rate_val
+                return learning_rate
+            else:
+                print("Wartość musi być w zakresie od 0.01 do 0.5. Spróbuj ponownie.")
+                learning_rate = None  # Resetuj, aby pętla kontynuowała
+        except ValueError:
+            print("Nieprawidłowe dane. Wprowadź liczbę zmiennoprzecinkową. Spróbuj ponownie.")
+            learning_rate = None # Resetuj, aby pętla kontynuowała
+
+
+def set_momentum_value_menu():
+    momentum = None
+    while momentum is None:
+        try:
+            momentum_str = input("Podaj wartość momentum (0.1 - 0.99): ")
+            momentum_val = float(momentum_str)
+            if 0.1 <= momentum_val <= 0.99:
+                momentum = momentum_val
+                return momentum
+            else:
+                print("Wartość musi być w zakresie od 0.1 do 0.99. Spróbuj ponownie.")
+                momentum = None  # Resetuj, aby pętla kontynuowała
+        except ValueError:
+            print("Nieprawidłowe dane. Wprowadź liczbę zmiennoprzecinkową. Spróbuj ponownie.")
+            momentum = None # Resetuj, aby pętla kontynuowała
+
 
 # Zapis do pliku - serializacja obiketu - zapis w postaci bajtów
 def save_mlp_to_file(mlp):
