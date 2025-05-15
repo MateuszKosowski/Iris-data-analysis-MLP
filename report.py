@@ -1,5 +1,7 @@
 import numpy as np
 
+from autoencoder import create_autoencoder_mlp, train_autoencoder, autoencoder_patterns, get_hidden_layer_outputs, \
+    train_and_test_autoencoder
 from learn import learn_one_epoch
 from mlp import MLP
 from matplotlib import pyplot as plt
@@ -32,6 +34,35 @@ def report(train_features, test_features, train_labels_vector, test_labels_vecto
     make_plot("1")
 
     return mlp_instance
+
+def report_autoencoder():
+    mlp_instance = create_autoencoder_mlp(use_bias=True, architecture=(4, 2, 4))
+    report_number = "2"
+    learning_rate = 0.6
+    momentum_coeff = 0
+    epochs = 1000
+    use_momentum = False
+
+    train_error, test_error = train_and_test_autoencoder(
+        mlp_instance,
+        train_patterns=autoencoder_patterns,
+        test_patterns=autoencoder_patterns,
+        epochs=epochs,
+        learning_rate=learning_rate,
+        use_momentum=use_momentum,
+        momentum_coeff=momentum_coeff,
+        log_filename_train=f"./reports/Rep{report_number}_train.txt",
+        log_filename_test=f"./reports/Rep{report_number}_test.txt",
+        shuffle_patterns=True,
+        target_mse_for_stop=None
+    )
+
+    print("Wyjścia warstwy ukrytej:")
+    hidde_layer_outputs = get_hidden_layer_outputs(mlp_instance)
+    for i in range(len(hidde_layer_outputs)):
+        print(f"Wartość wyjściowa neuronów ukrytych, po nauce, dla paternu {i + 1}: {hidde_layer_outputs[i]}")
+
+    make_plot("2")
 
 
 def report_mlp(

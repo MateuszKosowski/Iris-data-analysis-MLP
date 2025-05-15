@@ -21,6 +21,8 @@ def train_autoencoder(mlp_instance, epochs, learning_rate, use_momentum, momentu
     print(f"LR: {learning_rate}, Momentum: {momentum_coeff if use_momentum else 'Brak'}, Epoki: {epochs}")
     print(f"Liczba wzorców: {len(patterns)}")
 
+    average_epoch_error = 2.0
+
     # Przekształć cele na wektory kolumnowe, jeśli MLP.backward_pass tego oczekuje
     # Na podstawie Twojego kodu, backward_pass przyjmuje płaski target_outputs_vector.
 
@@ -32,12 +34,12 @@ def train_autoencoder(mlp_instance, epochs, learning_rate, use_momentum, momentu
 
     try:
         with open(log_filename, 'w') as log_file:
-            log_file.write("Epoch\tMSE\n") # Nagłówek pliku logu
+            log_file.write("") # czyści plik przed zapisaniem
 
             for epoch in range(epochs):
                 current_patterns = list(patterns)
                 if shuffle_patterns:
-                    random.shuffle(current_patterns)
+                    random.Random(42).shuffle(current_patterns)  # Ustalony seed dla powtarzalności
 
                 total_epoch_error = 0.0
 
@@ -56,11 +58,11 @@ def train_autoencoder(mlp_instance, epochs, learning_rate, use_momentum, momentu
                 average_epoch_error = total_epoch_error / len(patterns)
 
                 if (epoch + 1) % 10 == 0:  # Loguj co 10 epok dla autoenkodera
-                    log_file.write(f"{epoch + 1}\t{average_epoch_error:.8f}\n")
+                    log_file.write(f"{epoch + 1},{average_epoch_error:.8f}\n")
 
                 if target_mse_for_stop is not None and average_epoch_error <= target_mse_for_stop:
                     print(f"Osiągnięto docelowy błąd MSE {target_mse_for_stop} w epoce {epoch + 1}.")
-                    log_file.write(f"{epoch + 1}\t{average_epoch_error:.8f}\t(Osiągnięto cel MSE)\n")
+                    log_file.write(f"{epoch + 1},{average_epoch_error:.8f}\n")
                     break
         print(f"Dane MSE zapisano do pliku: {log_filename}")
     except IOError:
@@ -72,6 +74,66 @@ def train_autoencoder(mlp_instance, epochs, learning_rate, use_momentum, momentu
     print(f"Trening zakończony. Końcowe MSE: {average_epoch_error:.8f}")
     return average_epoch_error
 
+def train_and_test_autoencoder(
+    mlp_instance,
+    train_patterns,
+    test_patterns,
+    epochs,
+    learning_rate,
+    use_momentum,
+    momentum_coeff,
+    log_filename_train="mse_log_autoencoder_train.txt",
+    log_filename_test="mse_log_autoencoder_test.txt",
+    shuffle_patterns=True,
+    target_mse_for_stop=None
+):
+    # Przygotowanie sieci
+    for layer in mlp_instance.layers:
+        for neuron in layer.neurons:
+            neuron.learning_rate = learning_rate
+            neuron.momentum_param = momentum_coeff
+
+    # Wyczyszczenie plików
+    open(log_filename_train, "w").close()
+    open(log_filename_test, "w").close()
+
+    avg_train_error = None
+    avg_test_error = None
+
+    for epoch in range(epochs):
+        # 1) Trening
+        patterns = list(train_patterns)
+        if shuffle_patterns:
+            random.Random(42).shuffle(patterns)
+        total_train_error = 0.0
+        for inp, tgt in patterns:
+            out = mlp_instance.forward_pass(inp)
+            mlp_instance.backward_pass(tgt, use_momentum)
+            total_train_error += mlp_instance.calculate_mse(out, tgt)
+        avg_train_error = total_train_error / len(train_patterns)
+
+        # 2) Testowanie (tylko forward)
+        total_test_error = 0.0
+        for inp, tgt in test_patterns:
+            out = mlp_instance.forward_pass(inp)
+            total_test_error += mlp_instance.calculate_mse(out, tgt)
+        avg_test_error = total_test_error / len(test_patterns)
+
+        # Log co 10 epokę
+        if (epoch + 1) % 10 == 0:
+            with open(log_filename_train, "a") as f_tr:
+                f_tr.write(f"{epoch+1},{avg_train_error:.8f}\n")
+            with open(log_filename_test, "a") as f_te:
+                f_te.write(f"{epoch+1},{avg_test_error:.8f}\n")
+
+        # Opcjonalne przerwanie po osiągnięciu progu
+        if target_mse_for_stop is not None and avg_train_error <= target_mse_for_stop:
+            with open(log_filename_train, "a") as f_tr, open(log_filename_test, "a") as f_te:
+                f_tr.write(f"{epoch+1},{avg_train_error:.8f}\n")
+                f_te.write(f"{epoch+1},{avg_test_error:.8f}\n")
+            break
+
+    return avg_train_error, avg_test_error
 
 def get_hidden_layer_outputs(mlp_instance, patterns = autoencoder_patterns):
     """Zwraca aktywacje warstwy ukrytej dla podanych wzorców."""

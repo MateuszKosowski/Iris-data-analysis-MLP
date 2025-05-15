@@ -7,7 +7,7 @@ from learn import learn
 import pandas as pd
 import numpy as np
 
-from report import report
+from report import report, report_autoencoder
 
 
 def main():
@@ -290,6 +290,7 @@ def main():
 
         elif mode == "report":
             mlp_network = report(train_features, test_features, train_labels_vector, test_labels_vector, train_labels, test_labels)
+            report_autoencoder()
             is_mlp_created = True
 
         elif mode == "exit":
