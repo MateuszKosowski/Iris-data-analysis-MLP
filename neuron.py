@@ -12,7 +12,8 @@ class Neuron:
 
         self.num_inputs = num_inputs
         self.weights = (np.random.rand(num_inputs) * 2) - 1 # Generowanie wektora wag z <0,1) * 2 - 1 = <-1,1)
-        if use_bias:
+        self.use_bias = use_bias
+        if self.use_bias:
             self.bias = (np.random.rand() * 2) - 1
         else:
             self.bias = 0
@@ -48,7 +49,10 @@ class Neuron:
         weighted_sum = np.dot(inputs, self.weights)
 
         # 2. Dodaj bias
-        total_input = weighted_sum + self.bias
+        if self.use_bias:
+            total_input = weighted_sum + self.bias
+        else:
+            total_input = weighted_sum
 
         # 3. Zastosuj funkcję aktywacji
         self.last_sigmoid_input = total_input # Zapisanie ostatniego wejścia do funkcji aktywacji
@@ -82,9 +86,11 @@ class Neuron:
             self.weights += self.weights_velocity
 
             # Aktualizacja biasu
-            self.bias_velocity = (self.momentum_param * self.bias_velocity) - (self.learning_rate * self.delta)
-            self.bias += self.bias_velocity
+            if self.use_bias:
+                self.bias_velocity = (self.momentum_param * self.bias_velocity) - (self.learning_rate * self.delta)
+                self.bias += self.bias_velocity
         else:
             self.last_weights = copy.deepcopy(self.weights)  # Zapisanie starych wag
             self.weights = self.last_weights - self.learning_rate * self.gradient
-            self.bias = self.bias - self.learning_rate * self.delta
+            if self.use_bias:
+                self.bias = self.bias - self.learning_rate * self.delta
