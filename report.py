@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 
 def report(train_features, test_features, train_labels_vector, test_labels_vector, train_labels, test_labels):
 
-    mlp_instance = MLP(layer_sizes_array=(4, 2, 3, 3), use_bias=True, learning_rate=0.2, momentum=0.2)
+    mlp_instance = MLP(layer_sizes_array=(4,2,3,3), use_bias=True, learning_rate=0.2, momentum=0.0 )
 
     # Przygotowanie danych
     np.random.seed(50)  # Ustawienie ziarna dla powtarzalności permutacji
@@ -28,7 +28,7 @@ def report(train_features, test_features, train_labels_vector, test_labels_vecto
         test_labels_vector,
         train_labels,
         test_labels,
-        use_momentum=True
+        use_momentum=False
     )
 
     make_plot("1")
@@ -38,10 +38,10 @@ def report(train_features, test_features, train_labels_vector, test_labels_vecto
 def report_autoencoder():
     mlp_instance = create_autoencoder_mlp(use_bias=True, architecture=(4, 2, 4))
     report_number = "2"
-    learning_rate = 0.6
-    momentum_coeff = 0
+    learning_rate = 0.2
+    momentum_coeff = 0.9
     epochs = 1000
-    use_momentum = False
+    use_momentum = True
 
     train_error, test_error = train_and_test_autoencoder(
         mlp_instance,
@@ -61,6 +61,10 @@ def report_autoencoder():
     hidde_layer_outputs = get_hidden_layer_outputs(mlp_instance)
     for i in range(len(hidde_layer_outputs)):
         print(f"Wartość wyjściowa neuronów ukrytych, po nauce, dla paternu {i + 1}: {hidde_layer_outputs[i]}")
+    for i, (input_pattern, _) in enumerate(autoencoder_patterns):
+        mlp_instance.forward_pass(input_pattern)
+        print(f"Wartości wyjściowe neuronów wyjściowych, po nauce, dla paterna {i + 1}: {mlp_instance.layers[-1].outputs}")
+
 
     make_plot("2")
 
