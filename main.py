@@ -6,11 +6,13 @@ from menu import get_network_config_from_user, mode_menu, save_mlp_to_file, load
 from learn import learn
 import pandas as pd
 import numpy as np
+from sklearn.preprocessing import StandardScaler
 
 from report import report, report_autoencoder
 
 
 def main():
+    scaler = StandardScaler()
 
     #Wczytaj plik csv
     file_test = './data/data3_test.csv'
@@ -20,13 +22,17 @@ def main():
     data_train = pd.read_csv(file_train, header=None, sep=',')
     data_train.columns = ['Dlugosc kielicha', 'Szerokosc kielicha', 'Dlugosc platka', 'Szerokosc platka', 'Gatunek']
     train_features = data_train[['Dlugosc kielicha', 'Szerokosc kielicha', 'Dlugosc platka', 'Szerokosc platka']].values
+    train_features = scaler.fit_transform(train_features)
     train_labels = data_train['Gatunek'].values
 
     # Dane do testowania
     data_test = pd.read_csv(file_test, header=None, sep=',')
     data_test.columns = ['Dlugosc kielicha', 'Szerokosc kielicha', 'Dlugosc platka', 'Szerokosc platka', 'Gatunek']
     test_features = data_test[['Dlugosc kielicha', 'Szerokosc kielicha', 'Dlugosc platka', 'Szerokosc platka']].values
+    test_features = scaler.transform(test_features)
     test_labels = data_test['Gatunek'].values
+
+    print("Dane zostały znormalizowane za pomocą standaryzacji (średnia=0, odchylenie=1)")
 
     # Rozmiar zbioru treningowego
     num_input_features = train_features.shape[1] # Ile jest cech
